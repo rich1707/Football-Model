@@ -2,15 +2,8 @@
 title: "Poisson Regression Model"
 author: "Richard Ryan"
 date: '25 July 2022'
-output: 
-   html_document:
-      css: style.css
-      theme: readable
-      highlight: pygments
-      toc: true
-      toc_depth: 3
-      toc_float: true
-      number_sections: true
+output: html_document
+      
 ---
 
 ```{r, include=FALSE}
@@ -22,7 +15,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-<body style="background-color:#e8dcda;">
 
 # Introduction
 
@@ -513,12 +505,12 @@ football_data %>%
       outcome == "A" ~ "Away"
    )) %>%
    ggplot(aes(x = outcome, fill = outcome)) + 
-   geom_bar(colour = "black", alpha = 0.5) + 
+   geom_bar(colour = "black") + 
    facet_wrap(facets = "season") + 
    coord_flip() + 
    labs(x = NULL, y = NULL, title = "Total of each outcome by season") + 
    guides(fill = guide_legend(reverse = TRUE, title = NULL)) +
-   scale_fill_manual(values = c("#CB9E23", "#0c922a",  "#2F72C7")) +
+   scale_fill_manual(values = c("#a1adb6", "#b0afa0", "#7a8477")) +
    theme_classic() + 
    theme(
       axis.text.x = element_text(face = "bold"),
@@ -545,12 +537,12 @@ football_data %>%
    pivot_longer(home:away, names_to = "location", values_to = "goals") %>% 
    mutate(location = factor(location, levels = c("away", "home"))) %>% 
    ggplot(aes(x = location, y = goals)) + 
-   geom_col(aes(fill = location), colour = "black", alpha = 0.5) + 
+   geom_col(aes(fill = location), colour = "black") + 
    facet_wrap(facet = "season") + 
    coord_flip() + 
    labs(x = NULL, y = NULL, title = "Total goals home and away by season") +
    guides(fill = guide_legend(reverse = TRUE, title = NULL)) +
-   scale_fill_manual(values = c("#CB9E23", "#2F72C7")) +
+   scale_fill_manual(values = c("#a1adb6", "#b0afa0")) +
    theme_classic() +
    theme(
       axis.text = element_text(face = "bold"),
@@ -696,7 +688,7 @@ football_data %>%
    labs(y = "Totals", x = NULL, 
         title = "Breakdown of results by team for the 2018-19 season") + 
    guides(fill = guide_legend(reverse = TRUE, title = NULL)) +
-   scale_fill_manual(values = c("#CB9E23", "#0c922a",  "#2F72C7")) +
+   scale_fill_manual(values = c("black", "ivory4", "orange3")) +
    theme_classic() +
    theme(
       axis.text.x = element_text(face = "bold"),
