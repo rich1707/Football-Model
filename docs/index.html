@@ -1773,7 +1773,7 @@ allows us to access all sub-pages within each url.</p>
 <span id="cb17-24"><a href="#cb17-24" tabindex="-1"></a>            <span class="fu">html_text</span>()</span>
 <span id="cb17-25"><a href="#cb17-25" tabindex="-1"></a>      )</span>
 <span id="cb17-26"><a href="#cb17-26" tabindex="-1"></a>      </span>
-<span id="cb17-27"><a href="#cb17-27" tabindex="-1"></a>      football_xg_results <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(football_xg_results, temp_tbl) <span class="co"># change this</span></span>
+<span id="cb17-27"><a href="#cb17-27" tabindex="-1"></a>      football_xg_results <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(football_xg_results, temp_tbl) </span>
 <span id="cb17-28"><a href="#cb17-28" tabindex="-1"></a>      </span>
 <span id="cb17-29"><a href="#cb17-29" tabindex="-1"></a>      prev_page_button <span class="ot">&lt;-</span> remDr<span class="sc">$</span><span class="fu">findElement</span>(<span class="at">using =</span> <span class="st">&quot;css&quot;</span>, <span class="st">&quot;.calendar-prev&quot;</span>)</span>
 <span id="cb17-30"><a href="#cb17-30" tabindex="-1"></a>      button_is_enabled <span class="ot">&lt;-</span> <span class="fu">pluck</span>(prev_page_button<span class="sc">$</span><span class="fu">isElementEnabled</span>(), <span class="dv">1</span>)</span>

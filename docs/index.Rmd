@@ -220,7 +220,7 @@ for (url in page_urls) {
             html_text()
       )
       
-      football_xg_results <- bind_rows(football_xg_results, temp_tbl) # change this
+      football_xg_results <- bind_rows(football_xg_results, temp_tbl) 
       
       prev_page_button <- remDr$findElement(using = "css", ".calendar-prev")
       button_is_enabled <- pluck(prev_page_button$isElementEnabled(), 1)
