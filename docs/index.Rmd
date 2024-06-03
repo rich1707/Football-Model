@@ -524,12 +524,12 @@ football_data |>
       outcome == "A" ~ "Away"
    )) |>
    ggplot(aes(x = outcome, fill = outcome)) + 
-   geom_bar(colour = "black", alpha = 0.6) + 
+   geom_bar(colour = "black", alpha = 0.8) + 
    facet_wrap(facets = "season") + 
    coord_flip() + 
    labs(x = NULL, y = NULL, title = "Total of each outcome by season") + 
    guides(fill = guide_legend(reverse = TRUE, title = NULL)) +
-   scale_fill_manual(values = c("#E69F00", "#009E73", "#0072B2")) +
+   scale_fill_manual(values = c("#009E73", "#E69F00", "#0072B2")) +
    theme_classic() + 
    theme(
       axis.text.x = element_text(face = "bold"),
@@ -556,7 +556,7 @@ football_data |>
    pivot_longer(home:away, names_to = "location", values_to = "goals") |> 
    mutate(location = factor(location, levels = c("away", "home"))) |> 
    ggplot(aes(x = location, y = goals)) + 
-   geom_col(aes(fill = location), colour = "black", alpha = 0.6, width = 0.6) + 
+   geom_col(aes(fill = location), colour = "black", alpha = 0.6, width = 0.7) + 
    facet_wrap(facet = "season") + 
    coord_flip() + 
    labs(x = NULL, y = NULL, title = "Total goals home and away by season") +
@@ -701,13 +701,13 @@ football_data |>
    mutate(teams = factor(teams, levels = team_order)) |> 
    filter(season == 2019) |> 
    ggplot(aes(x = match_outcome)) +
-   geom_bar(aes(fill = match_outcome), colour = "black", alpha = 0.6) + 
+   geom_bar(aes(fill = match_outcome), colour = "black", alpha = 0.8) + 
    coord_flip() +
    facet_wrap(facets = "teams") + 
    labs(y = "Totals", x = NULL, 
         title = "Breakdown of results by team for the 2018-19 season") + 
    guides(fill = guide_legend(reverse = TRUE, title = NULL)) +
-   scale_fill_manual(values = c("#E69F00", "#009E73", "#0072B2")) +
+   scale_fill_manual(values = c("#009E73", "#E69F00", "#0072B2")) +
    theme_classic() +
    theme(
       axis.text.x = element_text(face = "bold"),
@@ -720,7 +720,7 @@ football_data |>
 
 ```
 
-One thing to not is how similar the order of the teams is between these plots. It seems that goal-supremacy and the total number of points is highly correlated, so we shall focus on engineering features based on goals. The home-advantage is also significant and needs to be taken into account.
+One thing to note is how similar the order of the teams is between these plots. It seems that goal-supremacy and the total number of points is highly correlated, so we shall focus on engineering features based on goals. The home-advantage is also significant and needs to be taken into account.
 
 # Feature Engineering
 
