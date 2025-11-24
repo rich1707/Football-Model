@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Richard Ryan">
+<meta name="dcterms.date" content="2022-07-25">
+
+<title>Football Betting Model</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="index_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="index_files/libs/quarto-html/anchor.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-dark-2fef5ea3f8957b3e4ecc936fc74692ca.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="index_files/libs/bootstrap/bootstrap-7d770c5a3425f183d023658294573b4f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Section Headings</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#collecting-data" id="toc-collecting-data" class="nav-link" data-scroll-target="#collecting-data"><span class="header-section-number">2</span> Collecting Data</a>
+  <ul class="collapse">
+  <li><a href="#auto-download-process" id="toc-auto-download-process" class="nav-link" data-scroll-target="#auto-download-process"><span class="header-section-number">2.1</span> Auto Download Process</a></li>
+  <li><a href="#webscraping" id="toc-webscraping" class="nav-link" data-scroll-target="#webscraping"><span class="header-section-number">2.2</span> Webscraping</a></li>
+  </ul></li>
+  <li><a href="#data-cleaning" id="toc-data-cleaning" class="nav-link" data-scroll-target="#data-cleaning"><span class="header-section-number">3</span> Data Cleaning</a>
+  <ul class="collapse">
+  <li><a href="#the-xg-dataframe" id="toc-the-xg-dataframe" class="nav-link" data-scroll-target="#the-xg-dataframe"><span class="header-section-number">3.1</span> The xG dataframe</a></li>
+  <li><a href="#the-basic-dataframe" id="toc-the-basic-dataframe" class="nav-link" data-scroll-target="#the-basic-dataframe"><span class="header-section-number">3.2</span> The basic dataframe</a></li>
+  <li><a href="#joining-our-dataframes" id="toc-joining-our-dataframes" class="nav-link" data-scroll-target="#joining-our-dataframes"><span class="header-section-number">3.3</span> Joining our dataframes</a></li>
+  </ul></li>
+  <li><a href="#data-exploration" id="toc-data-exploration" class="nav-link" data-scroll-target="#data-exploration"><span class="header-section-number">4</span> Data Exploration</a>
+  <ul class="collapse">
+  <li><a href="#home-advantage" id="toc-home-advantage" class="nav-link" data-scroll-target="#home-advantage"><span class="header-section-number">4.1</span> Home Advantage</a></li>
+  <li><a href="#team-ability" id="toc-team-ability" class="nav-link" data-scroll-target="#team-ability"><span class="header-section-number">4.2</span> Team Ability</a></li>
+  </ul></li>
+  <li><a href="#feature-engineering" id="toc-feature-engineering" class="nav-link" data-scroll-target="#feature-engineering"><span class="header-section-number">5</span> Feature Engineering</a></li>
+  <li><a href="#building-a-model" id="toc-building-a-model" class="nav-link" data-scroll-target="#building-a-model"><span class="header-section-number">6</span> Building a Model</a></li>
+  <li><a href="#evaluation" id="toc-evaluation" class="nav-link" data-scroll-target="#evaluation"><span class="header-section-number">7</span> Evaluation</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Football Betting Model</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Richard Ryan </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 25, 2022</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p>Our goal here is to investigate whether a profitable football betting model can be built using publicly available data.</p>
+<p>Our answer to this question will involve building a full modelling workflow consisting of the following steps.</p>
+<ul>
+<li>Collecting data from various online sources</li>
+<li>Cleaning the data</li>
+<li>Conducting exploratory data analysis to uncover trends and tendencies within the data</li>
+<li>Feature Engineering</li>
+<li>Build an explanatory model</li>
+<li>Use our model to predict on previously unseen testing data</li>
+<li>Evaluate the results.</li>
+</ul>
+<p>Having outlined what the process will be, we can now load the packages we will need to accomplish our goal.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(slider)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(clock)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(poissonreg)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rvest)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RSelenium)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(robotstxt)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(fs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="collecting-data" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Collecting Data</h1>
+<p>All data analysis starts with data. When it comes to football, the best data is usually collected by organisations such as <a href="%22https://www.statsperform.com/opta/%22">Opta</a> or <a href="%22https://wyscout.com/%22">Wyscout</a>. The data provided by these organisations is remarkably detailed and sophisticated, but the very high cost of subscribing to these services means it isn’t easy to access for most people.</p>
+<p>Is it possible to make a profit on football betting without access to the above services? In other words, can it be done with data that is freely available to download? The best place to start here is the <a href="%22https://www.football-data.co.uk/data.php%22">Football Data Website</a>, which provides several years of data for each of the major European leagues, though in what follows we shall only consider the English Premier League.</p>
+<p>As we are dealing with just seven seasons worth of data, it would be easy enough to download the files we need manually; but it is better to use code as then we will make the process faster and more scalable going forward.</p>
+<section id="auto-download-process" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="auto-download-process"><span class="header-section-number">2.1</span> Auto Download Process</h2>
+<p>Thankfully the links to the csv files have a common format, with the only difference being a reference to the season in question. This reference to the season takes the form of four digits, such that 1920 refers to the 2019-2020 season.</p>
+<p>Therefore our first job is to construct a vector of the digits we need:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>numerals <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">10</span><span class="sc">:</span><span class="dv">20</span>, <span class="dv">11</span><span class="sc">:</span><span class="dv">21</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>numerals <span class="ot">&lt;-</span> <span class="fu">sort</span>(numerals) <span class="sc">|&gt;</span>  </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">as.character</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">str_flatten</span>()</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>numerals <span class="ot">&lt;-</span> <span class="fu">str_match_all</span>(numerals, <span class="st">"</span><span class="sc">\\</span><span class="st">d{4}"</span>) <span class="sc">|&gt;</span>  </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">unlist</span>()</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>numerals</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "1011" "1112" "1213" "1314" "1415" "1516" "1617" "1718" "1819" "1920"
+[11] "2021"</code></pre>
+</div>
+</div>
+<p>We can now create a vector of the links we need for the auto-download function:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data_urls <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"https://www.football-data.co.uk/mmz4281/"</span>, numerals, <span class="st">"/E0.csv"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>data_urls</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "https://www.football-data.co.uk/mmz4281/1011/E0.csv"
+ [2] "https://www.football-data.co.uk/mmz4281/1112/E0.csv"
+ [3] "https://www.football-data.co.uk/mmz4281/1213/E0.csv"
+ [4] "https://www.football-data.co.uk/mmz4281/1314/E0.csv"
+ [5] "https://www.football-data.co.uk/mmz4281/1415/E0.csv"
+ [6] "https://www.football-data.co.uk/mmz4281/1516/E0.csv"
+ [7] "https://www.football-data.co.uk/mmz4281/1617/E0.csv"
+ [8] "https://www.football-data.co.uk/mmz4281/1718/E0.csv"
+ [9] "https://www.football-data.co.uk/mmz4281/1819/E0.csv"
+[10] "https://www.football-data.co.uk/mmz4281/1920/E0.csv"
+[11] "https://www.football-data.co.uk/mmz4281/2021/E0.csv"</code></pre>
+</div>
+</div>
+<p>Before downloading the files, we will also need to provide a vector of names with which the files will be labelled:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>file_names <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"epl_season_"</span>, numerals, <span class="st">".csv"</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>file_names</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "epl_season_1011.csv" "epl_season_1112.csv" "epl_season_1213.csv"
+ [4] "epl_season_1314.csv" "epl_season_1415.csv" "epl_season_1516.csv"
+ [7] "epl_season_1617.csv" "epl_season_1718.csv" "epl_season_1819.csv"
+[10] "epl_season_1920.csv" "epl_season_2021.csv"</code></pre>
+</div>
+</div>
+<p>The function <code>walk2()</code> from the <code>purrr</code> package makes the downloading very simple, calling the <code>download.file()</code> function for every link in our vector of data urls.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">walk2</span>(data_urls, file_names, download.file, <span class="at">mode =</span> <span class="st">"wb"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The foregoing step downloads the files into our working directory. We now use the <code>fs</code> package to move the files into a raw_data folder.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">file_move</span>(file_names, <span class="st">"raw_data"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="webscraping" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="webscraping"><span class="header-section-number">2.2</span> Webscraping</h2>
+<p>The above downloads give us enough data to start building models. However, it would be nice to be able to include some rather more advanced statistics, such as the ones mentioned above that are provided by <a href="%22https://www.statsperform.com/opta/%22">Opta</a> or <a href="%22https://wyscout.com/%22">Wyscout</a>. The most important statistic provided by these organisations is the expected goals figure, usually abbreviated to xG.</p>
+<p>Thankfully there is a website, namely <a href="%22https://understat.com/%22">Understat</a>, that provides an xG figure free of charge. <a href="%22https://understat.com/%22">Understat</a> does not provide an API nor does it have csv files available for download; so to obtain the xG data we shall have to build a webscraper.</p>
+<p>We first establish that there are no restrictions on what we can scrape:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">paths_allowed</span>(<span class="st">"understat.com/"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>All user-agents are permitted.</p>
+<p>Unfortunately the website uses JavaScript to render much of the information we want, so the job of scraping the data is not as straightforward as we might wish.</p>
+<p>Our scraper will use a combination of <code>RSelenium</code> and <code>rvest</code>. The selenium functions will be used to navigate between the pages and <code>rvest</code> will be used to scrape the data once the page in question has loaded.</p>
+<p>We start with a vector of urls and an empty data-frame:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>page_urls <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"https://understat.com/league/EPL/"</span>, <span class="dv">2014</span><span class="sc">:</span><span class="dv">2021</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>football_xg_results <span class="ot">&lt;-</span> </span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">tibble</span>(</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">season =</span> <span class="fu">character</span>(), </span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">home_team =</span> <span class="fu">character</span>(), </span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">home_goals =</span> <span class="fu">character</span>(), </span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">home_xg =</span> <span class="fu">character</span>(), </span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">away_team =</span> <span class="fu">character</span>(), </span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">away_goals =</span> <span class="fu">character</span>(), </span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">away_xg =</span> <span class="fu">character</span>()</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>   )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>If for some reason one of the links can’t be accessed, we shall need to create a safe version of <code>tibble</code> so that we can continue to harvest the data we need after an error; therefore we use <code>possibly()</code> to provide a safe default value.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>possibly_tibble <span class="ot">&lt;-</span> <span class="fu">possibly</span>(tibble, <span class="at">otherwise =</span> <span class="cn">NULL</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can now set up <code>RSelenium</code>. First select the driver:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>binman<span class="sc">::</span><span class="fu">list_versions</span>(<span class="st">"chromedriver"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$win32
+[1] "113.0.5672.63" "114.0.5735.16" "114.0.5735.90" "117.0.5938.92"</code></pre>
+</div>
+</div>
+<p>Now boot up the <code>client</code> and <code>server</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>remote_driver <span class="ot">&lt;-</span> <span class="fu">rsDriver</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>   <span class="at">browser =</span> <span class="st">"firefox"</span>, </span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>   <span class="at">chromever =</span> <span class="st">"114.0.5735.90"</span>, </span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>   <span class="at">port =</span> netstat<span class="sc">::</span><span class="fu">free_port</span>(),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>   <span class="at">verbose =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>   <span class="at">phantomver =</span> <span class="cn">NULL</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>remDr <span class="ot">&lt;-</span> remote_driver<span class="sc">$</span>client</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>remDr<span class="sc">$</span><span class="fu">open</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We now loop over the <code>page_url</code> vector, using <code>RSelenium</code> to navigate between sub-pages.</p>
+<p>There aren’t many situations in R where loops are needed, but we shall need both a <code>for</code> loop and a <code>repeat</code> loop to navigate through the pages. Basically, the repeat-loop runs for as long as the prev_page_button (a JavaScript control) is active, which allows us to access all sub-pages within each url.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (url <span class="cf">in</span> page_urls) {</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>   remDr<span class="sc">$</span><span class="fu">navigate</span>(url)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>   <span class="cf">repeat</span> {</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>      html <span class="ot">&lt;-</span> <span class="fu">pluck</span>(remDr<span class="sc">$</span><span class="fu">getPageSource</span>(), <span class="dv">1</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>         <span class="fu">read_html</span>()</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>      temp_tbl <span class="ot">&lt;-</span> <span class="fu">possibly_tibble</span>(</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">season =</span> <span class="fu">html_element</span>(html, <span class="st">".calendar-date"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>            <span class="fu">html_text</span>(),</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">home_team =</span> <span class="fu">html_elements</span>(html, <span class="st">".team-home a"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>            <span class="fu">html_text</span>(), </span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">home_goals =</span> <span class="fu">html_elements</span>(html, <span class="st">".teams-goals .team-home"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>            <span class="fu">html_text</span>(),</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>         <span class="at">home_xg =</span> <span class="fu">html_elements</span>(html, <span class="st">".teams-xG .team-home"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>            <span class="fu">html_text</span>(),</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">away_team =</span> <span class="fu">html_elements</span>(html, <span class="st">".team-away a"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>            <span class="fu">html_text</span>(),</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>         <span class="at">away_goals =</span> <span class="fu">html_elements</span>(html, <span class="st">".teams-goals .team-away"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>            <span class="fu">html_text</span>(), </span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>         <span class="at">away_xg =</span> <span class="fu">html_elements</span>(html, <span class="st">".teams-xG .team-away"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>            <span class="fu">html_text</span>()</span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>      football_xg_results <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(football_xg_results, temp_tbl) </span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a>      prev_page_button <span class="ot">&lt;-</span> remDr<span class="sc">$</span><span class="fu">findElement</span>(<span class="at">using =</span> <span class="st">"css"</span>, <span class="st">".calendar-prev"</span>)</span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a>      button_is_enabled <span class="ot">&lt;-</span> <span class="fu">pluck</span>(prev_page_button<span class="sc">$</span><span class="fu">isElementEnabled</span>(), <span class="dv">1</span>)</span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (button_is_enabled <span class="sc">==</span> <span class="cn">FALSE</span>) <span class="cf">break</span></span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a>      prev_page_button<span class="sc">$</span><span class="fu">clickElement</span>() </span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>   }</span>
+<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can now close down both our <code>client</code> and our <code>server</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>remDr<span class="sc">$</span><span class="fu">close</span>()</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>remote_driver<span class="sc">$</span>server<span class="sc">$</span><span class="fu">stop</span>()</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="fu">system</span>(<span class="st">"taskkill /im java.exe /f"</span>, <span class="at">intern =</span> <span class="cn">FALSE</span>, <span class="at">ignore.stdout =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Our data is now harvested into a dataframe and can be written to disk.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(football_xg_results, <span class="st">"raw_data_2/football_xg_results"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="data-cleaning" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Data Cleaning</h1>
+<p>We now have one dataframe and a collection of csv files. Before we can start building our model, we will have to combine these csv files into a dataframe. Both dataframes will need to be cleaned before being joined together for feature engineering and modelling.</p>
+<section id="the-xg-dataframe" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="the-xg-dataframe"><span class="header-section-number">3.1</span> The xG dataframe</h2>
+<p>We can make a start on the the <code>football_xg_results</code> dataframe, as this is the simpler task of the two. Start by reading in the relevant dataframe:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>football_xg_results <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"raw_data_2/football_xg_results"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The first thing to check, of course, is whether we have any missing values.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>football_xg_results <span class="sc">|&gt;</span> </span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">map_int</span>(<span class="cf">function</span>(.x) <span class="fu">sum</span>(<span class="fu">is.na</span>(.x)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    season  home_team home_goals    home_xg  away_team away_goals    away_xg 
+         0          0          0          0          0          0          0 </code></pre>
+</div>
+</div>
+<p>So there is no data missing.</p>
+<p>However, if we look closely at the data, we shall see that that the date of each match is not always correct. The reason for the error is down to the way we wrote our scraper, which didn’t record the data on each subpage. To harvest the correct date was possible but would have required a much more complicated approach. I didn’t feel as though this extra complexity was warranted because, as previously stated, we intend to join this dataframe with the data we downloaded from the <a href="%22https://www.football-data.co.uk/data.php%22">Football Data Website</a>, in which all the date features are correct.</p>
+<p>So for now all we really need to do is construct a season variable, which will use for the upcoming join between dataframes. Therefore let’s start by using the <code>clock</code> package to parse the date into the correct format:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>football_xg_results <span class="ot">&lt;-</span> football_xg_results <span class="sc">|&gt;</span>  </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">date =</span> <span class="fu">date_parse</span>(season, <span class="at">format =</span> <span class="st">"%A, %B %d, %Y"</span>)) <span class="sc">|&gt;</span>  </span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">arrange</span>(date, home_team)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can now engineer a season variable, again using the <code>clock</code> package. At this point the date variable is supernumerary and can be dropped.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>football_xg_results <span class="ot">&lt;-</span> football_xg_results <span class="sc">|&gt;</span>  </span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">season =</span> <span class="fu">get_year</span>(date) <span class="sc">+</span> (<span class="fu">get_month</span>(date) <span class="sc">&gt;=</span> <span class="dv">8</span>)) <span class="sc">|&gt;</span>  </span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(<span class="sc">-</span>date)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="the-basic-dataframe" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="the-basic-dataframe"><span class="header-section-number">3.2</span> The basic dataframe</h2>
+<p>Our first job here is to read the various csv files into a single dataframe.</p>
+<p>We shall call this dataframe <code>football_price_data</code> as it contain essential information as to the betting odds available on each match.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> <span class="fu">dir</span>(<span class="st">"raw_data"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span>  </span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">map</span>(<span class="cf">function</span>(.x) <span class="fu">read_csv</span>(.x, <span class="at">col_types =</span> <span class="fu">cols</span>(<span class="at">.default =</span> <span class="st">"c"</span>))) <span class="sc">|&gt;</span> </span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">list_rbind</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>First we rename the relevant features to better suit our purpose.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data  <span class="sc">|&gt;</span>  </span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">date =</span> Date, <span class="at">home_team =</span> HomeTeam, <span class="at">away_team =</span> AwayTeam,</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">home_goals =</span> FTHG, <span class="at">away_goals =</span> FTAG, <span class="at">outcome =</span> FTR, <span class="at">max_home_price =</span> BbMxH,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">avg_home_price =</span> BbAvH, <span class="at">max_draw_price =</span> BbMxD, <span class="at">avg_draw_price =</span> BbAvD,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">max_away_price =</span> BbMxA, <span class="at">avg_away_price =</span> BbAvA, B365H<span class="sc">:</span>BSA</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>   )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now that we have read in our data, we need to check for missing values:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(date<span class="sc">:</span>avg_away_price) <span class="sc">|&gt;</span> </span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">map_int</span>(<span class="cf">function</span>(.x) <span class="fu">sum</span>(<span class="fu">is.na</span>(.x)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          date      home_team      away_team     home_goals     away_goals 
+             1              1              1              1              1 
+       outcome max_home_price avg_home_price max_draw_price avg_draw_price 
+             1            761            761            761            761 
+max_away_price avg_away_price 
+           761            761 </code></pre>
+</div>
+</div>
+<p>There are 761 missing values for each of the price variables; thankfully this is easily fixed.</p>
+<p>We also need to check on the variable-type of our features to avoid any type mismatches when we begin feature engineering and modelling.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(date<span class="sc">:</span>avg_away_price) <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">map_chr</span>(<span class="cf">function</span>(.x) <span class="fu">class</span>(.x))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          date      home_team      away_team     home_goals     away_goals 
+   "character"    "character"    "character"    "character"    "character" 
+       outcome max_home_price avg_home_price max_draw_price avg_draw_price 
+   "character"    "character"    "character"    "character"    "character" 
+max_away_price avg_away_price 
+   "character"    "character" </code></pre>
+</div>
+</div>
+<p>Let’s make it our first job to convert each variable to the correct class. The outcome needs to be a factor and all features relating to goals and betting odds need to be numeric.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">relocate</span>(outcome, <span class="at">.after =</span> away_team) <span class="sc">|&gt;</span> </span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">outcome =</span> <span class="fu">as.factor</span>(outcome)) <span class="sc">|&gt;</span> </span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="fu">across</span>(home_goals<span class="sc">:</span>avg_away_price, as.numeric))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can now turn our attention to the date feature. This is rather more complex, as the date is represented in two different ways; we therefore need to rework the date variable into a consistent format. We do this using a simple regular-expression:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">date =</span> <span class="fu">str_replace</span>(date, <span class="st">"/10$"</span>, <span class="st">"/2010"</span>),</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">date =</span> <span class="fu">str_replace</span>(date, <span class="st">"/11$"</span>, <span class="st">"/2011"</span>),</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">date =</span> <span class="fu">str_replace</span>(date, <span class="st">"/12$"</span>, <span class="st">"/2012"</span>),</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">date =</span> <span class="fu">str_replace</span>(date, <span class="st">"/13$"</span>, <span class="st">"/2013"</span>),</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">date =</span> <span class="fu">str_replace</span>(date, <span class="st">"/14$"</span>, <span class="st">"/2014"</span>),</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">date =</span> <span class="fu">str_replace</span>(date, <span class="st">"/15$"</span>, <span class="st">"/2015"</span>),</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">date =</span> <span class="fu">str_replace</span>(date, <span class="st">"/16$"</span>, <span class="st">"/2016"</span>),</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">date =</span> <span class="fu">str_replace</span>(date, <span class="st">"/17$"</span>, <span class="st">"/2017"</span>)</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>   )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>With the irregularities removed, we can now convert the variable into the format of a true date:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">date =</span> <span class="fu">date_parse</span>(date, <span class="at">format =</span> <span class="st">"%d/%m/%Y"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Next we need to calculate the missing values.</p>
+<p>To do this, we simply calculate the <code>max()</code> and the <code>mean()</code> from the given bookmakers’ prices. This is a slightly more complicated process than usual because we have to operate on our data on a row-by-row basis; but the <code>rowwise()</code> function makes this a relatively painless affair.</p>
+<p>We start by converting the columns we need to a numeric format:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="fu">across</span>(B365H<span class="sc">:</span>BSA, as.numeric))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We then calculate the missing data using <code>rowwise()</code> and <code>c_across()</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">max_home_price =</span> <span class="fu">max</span>(<span class="fu">c_across</span>(<span class="fu">ends_with</span>(<span class="st">"H"</span>)), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>()</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">avg_home_price =</span> <span class="fu">mean</span>(<span class="fu">c_across</span>(<span class="fu">ends_with</span>(<span class="st">"H"</span>)), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>()</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">max_draw_price =</span> <span class="fu">max</span>(<span class="fu">c_across</span>(<span class="fu">ends_with</span>(<span class="st">"D"</span>)), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>()</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">avg_draw_price =</span> <span class="fu">mean</span>(<span class="fu">c_across</span>(<span class="fu">ends_with</span>(<span class="st">"D"</span>)), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>()</span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">max_away_price =</span> <span class="fu">max</span>(<span class="fu">c_across</span>(<span class="fu">ends_with</span>(<span class="st">"A"</span>)), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb35-24"><a href="#cb35-24" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>()</span>
+<span id="cb35-25"><a href="#cb35-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-26"><a href="#cb35-26" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb35-27"><a href="#cb35-27" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb35-28"><a href="#cb35-28" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">avg_away_price =</span> <span class="fu">mean</span>(<span class="fu">c_across</span>(<span class="fu">ends_with</span>(<span class="st">"A"</span>)), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Finally we select the columns we need and drop any remaining NA values:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(date<span class="sc">:</span>avg_away_price) <span class="sc">|&gt;</span> </span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">drop_na</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="joining-our-dataframes" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="joining-our-dataframes"><span class="header-section-number">3.3</span> Joining our dataframes</h2>
+<p>In order to join our dataframes a couple of additional steps are needed.</p>
+<p>First we need to engineer a season variable in our <code>football_price_data</code> dataframe. This variable, together with the home and away teams, acts like a key-column in a database, guaranteeing that our dataframes will be joined correctly.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>football_price_data <span class="ot">&lt;-</span> football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">season =</span> <span class="fu">get_year</span>(date) <span class="sc">+</span> (<span class="fu">get_month</span>(date) <span class="sc">&gt;=</span> <span class="dv">8</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">relocate</span>(season, <span class="at">.after =</span> date)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The second (and final) step is make the names of the teams consistent.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>football_xg_results <span class="ot">&lt;-</span> football_xg_results <span class="sc">|&gt;</span> </span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">home_team =</span> <span class="fu">case_when</span>(</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>      home_team <span class="sc">==</span> <span class="st">"Manchester City"</span> <span class="sc">~</span> <span class="st">"Man City"</span>,</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>      home_team <span class="sc">==</span> <span class="st">"Manchester United"</span> <span class="sc">~</span> <span class="st">"Man United"</span>,</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>      home_team <span class="sc">==</span> <span class="st">"Newcastle United"</span> <span class="sc">~</span> <span class="st">"Newcastle"</span>,</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>      home_team <span class="sc">==</span> <span class="st">"Queens Park Rangers"</span> <span class="sc">~</span> <span class="st">"QPR"</span>,</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>      home_team <span class="sc">==</span> <span class="st">"West Bromwich Albion"</span> <span class="sc">~</span> <span class="st">"West Brom"</span>,</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>      home_team <span class="sc">==</span> <span class="st">"Wolverhampton Wanderers"</span> <span class="sc">~</span> <span class="st">"Wolves"</span>,</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> home_team</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>   ))</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>football_xg_results <span class="ot">&lt;-</span> football_xg_results <span class="sc">|&gt;</span> </span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">away_team =</span> <span class="fu">case_when</span>(</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>      away_team <span class="sc">==</span> <span class="st">"Manchester City"</span> <span class="sc">~</span> <span class="st">"Man City"</span>,</span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>      away_team <span class="sc">==</span> <span class="st">"Manchester United"</span> <span class="sc">~</span> <span class="st">"Man United"</span>,</span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>      away_team <span class="sc">==</span> <span class="st">"Newcastle United"</span> <span class="sc">~</span> <span class="st">"Newcastle"</span>,</span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>      away_team <span class="sc">==</span> <span class="st">"Queens Park Rangers"</span> <span class="sc">~</span> <span class="st">"QPR"</span>,</span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>      away_team <span class="sc">==</span> <span class="st">"West Bromwich Albion"</span> <span class="sc">~</span> <span class="st">"West Brom"</span>,</span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>      away_team <span class="sc">==</span> <span class="st">"Wolverhampton Wanderers"</span> <span class="sc">~</span> <span class="st">"Wolves"</span>,</span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> away_team</span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>   ))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can now join our dataframes into one:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="ot">&lt;-</span> </span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>   football_price_data <span class="sc">|&gt;</span> </span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">left_join</span>(</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>      football_xg_results, </span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">by =</span> <span class="fu">c</span>(</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>         <span class="st">"season"</span> <span class="ot">=</span> <span class="st">"season"</span>, <span class="st">"home_team"</span> <span class="ot">=</span> <span class="st">"home_team"</span>, </span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>         <span class="st">"away_team"</span> <span class="ot">=</span> <span class="st">"away_team"</span>, <span class="st">"home_goals"</span> <span class="ot">=</span> <span class="st">"home_goals"</span>, </span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>         <span class="st">"away_goals"</span> <span class="ot">=</span> <span class="st">"away_goals"</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span> <span class="fu">arrange</span> (date, home_team)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Finally, we write the result to disk:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(football_data, <span class="st">"cleaned_data/football_data"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="data-exploration" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Data Exploration</h1>
+<p>The most important part of any model is feature engineering. However, while the success of our model will be highly dependent on feature engineering, the quality of our feature engineering will likewise depend upon how well we do our data exploration. Simply put, without a thorough understanding of our data we will not know what features we need to engineer.</p>
+<p>In this instance, we do have a few short-cuts open to us. It is well known that the probability of a given team winning a match can be modelled quite accurately using just two features, namely home-advantage and average goals scored. So to save ourselves some time, we shall focus on these features in what follows.</p>
+<section id="home-advantage" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="home-advantage"><span class="header-section-number">4.1</span> Home Advantage</h2>
+<p>Let’s first consider the contribution of <code>home-advantage</code> to the outcome of a match. This is easily measured in football, at least superficially, as every team plays every other team twice per season, with one of these matches being played at the home stadium and one away. If the respective ability of the teams in question was all that mattered, then we would see no difference in the number of home-wins vs away-wins.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="sc">|&gt;</span> </span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">outcome =</span> <span class="fu">case_when</span>(</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>      outcome <span class="sc">==</span> <span class="st">"H"</span> <span class="sc">~</span> <span class="st">"Home"</span>,</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>      outcome <span class="sc">==</span> <span class="st">"D"</span> <span class="sc">~</span> <span class="st">"Draw"</span>,</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>      outcome <span class="sc">==</span> <span class="st">"A"</span> <span class="sc">~</span> <span class="st">"Away"</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>   )) <span class="sc">|&gt;</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> outcome, <span class="at">fill =</span> outcome)) <span class="sc">+</span> </span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_bar</span>(<span class="at">colour =</span> <span class="st">"black"</span>, <span class="at">alpha =</span> <span class="fl">0.8</span>) <span class="sc">+</span> </span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="st">"season"</span>) <span class="sc">+</span> </span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>   <span class="fu">coord_flip</span>() <span class="sc">+</span> </span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">title =</span> <span class="st">"Total of each outcome by season"</span>) <span class="sc">+</span> </span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">guides</span>(<span class="at">fill =</span> <span class="fu">guide_legend</span>(<span class="at">reverse =</span> <span class="cn">TRUE</span>, <span class="at">title =</span> <span class="cn">NULL</span>)) <span class="sc">+</span></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>   <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"#009E73"</span>, <span class="st">"#E69F00"</span>, <span class="st">"#0072B2"</span>)) <span class="sc">+</span></span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>   <span class="fu">theme_classic</span>() <span class="sc">+</span> </span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>   <span class="fu">theme</span>(</span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">16</span>)</span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a>   )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/unnamed-chunk-33-1.png" class="img-fluid figure-img" width="864"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>As we can see, in all bar one season, the home team won more matches than their share. The single season when this did not hold was 2020-21, when the pandemic meant matches were played behind closed doors. This suggests that crowd support is the factor behind home-advantage.</p>
+<p>The above finding is also supported by the total goals scored per season, both home and away.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="sc">|&gt;</span> </span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(season) <span class="sc">|&gt;</span> </span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">summarise</span>(<span class="at">home =</span> <span class="fu">sum</span>(home_goals),</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>             <span class="at">away =</span> <span class="fu">sum</span>(away_goals)) <span class="sc">|&gt;</span> </span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">pivot_longer</span>(home<span class="sc">:</span>away, <span class="at">names_to =</span> <span class="st">"location"</span>, <span class="at">values_to =</span> <span class="st">"goals"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">location =</span> <span class="fu">factor</span>(location, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"away"</span>, <span class="st">"home"</span>))) <span class="sc">|&gt;</span> </span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> location, <span class="at">y =</span> goals)) <span class="sc">+</span> </span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">fill =</span> location), <span class="at">colour =</span> <span class="st">"black"</span>, <span class="at">alpha =</span> <span class="fl">0.6</span>, <span class="at">width =</span> <span class="fl">0.7</span>) <span class="sc">+</span> </span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>   <span class="fu">facet_wrap</span>(<span class="at">facet =</span> <span class="st">"season"</span>) <span class="sc">+</span> </span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">coord_flip</span>() <span class="sc">+</span> </span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">title =</span> <span class="st">"Total goals home and away by season"</span>) <span class="sc">+</span></span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a>   <span class="fu">guides</span>(<span class="at">fill =</span> <span class="fu">guide_legend</span>(<span class="at">reverse =</span> <span class="cn">TRUE</span>, <span class="at">title =</span> <span class="cn">NULL</span>)) <span class="sc">+</span></span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a>   <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"#E69F00"</span>, <span class="st">"#0072B2"</span>)) <span class="sc">+</span></span>
+<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a>   <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
+<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a>   <span class="fu">theme</span>(</span>
+<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">axis.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">16</span>)</span>
+<span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb42-22"><a href="#cb42-22" aria-hidden="true" tabindex="-1"></a>   )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/unnamed-chunk-34-1.png" class="img-fluid figure-img" width="864"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>As we can see, more goals were scored at home in every season save 2020-21. Given that the home vs.&nbsp;away wins in 2020-21 are exactly what we would expect given the ratio of home vs.&nbsp;away goals, we can feel even more secure in our conclusion that this was an anomaly brought about by the exclusion of fans. For any future matches played behind closed doors it would make sense to consider removing home-advantage from our model.</p>
+</section>
+<section id="team-ability" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="team-ability"><span class="header-section-number">4.2</span> Team Ability</h2>
+<p>We can measure team ability in one of two ways: (1) by the matches they win; or (2) by the difference between the goals they score and the goals they concede. Whichever metric we choose, it is clear that there is a gulf between the best and worst teams in the English Premier League.</p>
+<p>Consider, for example, the League table for the classic 2018-19 season:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="sc">|&gt;</span> </span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">pivot_longer</span>(home_team<span class="sc">:</span>away_team, <span class="at">names_to =</span> <span class="st">"location"</span>, <span class="at">values_to =</span> <span class="st">"teams"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">points =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"H"</span> <span class="sc">~</span> <span class="dv">3</span>,</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"D"</span> <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"A"</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"H"</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"D"</span> <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"A"</span> <span class="sc">~</span> <span class="dv">3</span></span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>   )) <span class="sc">|&gt;</span> </span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">goals_scored =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">~</span> home_goals,</span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">~</span> away_goals</span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a>   )) <span class="sc">|&gt;</span> </span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">goals_conceded =</span> <span class="fu">case_when</span>(</span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">~</span> away_goals,</span>
+<span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">~</span> home_goals</span>
+<span id="cb43-18"><a href="#cb43-18" aria-hidden="true" tabindex="-1"></a>   )) <span class="sc">|&gt;</span> </span>
+<span id="cb43-19"><a href="#cb43-19" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(season, teams) <span class="sc">|&gt;</span> </span>
+<span id="cb43-20"><a href="#cb43-20" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">match_number =</span> <span class="fu">seq</span>(teams)) <span class="sc">|&gt;</span> </span>
+<span id="cb43-21"><a href="#cb43-21" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">total_points =</span> <span class="fu">cumsum</span>(points),</span>
+<span id="cb43-22"><a href="#cb43-22" aria-hidden="true" tabindex="-1"></a>          <span class="at">total_scored =</span> <span class="fu">cumsum</span>(goals_scored),</span>
+<span id="cb43-23"><a href="#cb43-23" aria-hidden="true" tabindex="-1"></a>          <span class="at">total_conceded =</span> <span class="fu">cumsum</span>(goals_conceded),</span>
+<span id="cb43-24"><a href="#cb43-24" aria-hidden="true" tabindex="-1"></a>          <span class="at">won =</span> <span class="fu">cumsum</span>(points <span class="sc">==</span> <span class="dv">3</span>),</span>
+<span id="cb43-25"><a href="#cb43-25" aria-hidden="true" tabindex="-1"></a>          <span class="at">drawn =</span> <span class="fu">cumsum</span>(points <span class="sc">==</span> <span class="dv">1</span>),</span>
+<span id="cb43-26"><a href="#cb43-26" aria-hidden="true" tabindex="-1"></a>          <span class="at">lost =</span> <span class="fu">cumsum</span>(points <span class="sc">==</span> <span class="dv">0</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb43-27"><a href="#cb43-27" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb43-28"><a href="#cb43-28" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filter</span>(match_number <span class="sc">==</span> <span class="dv">38</span> <span class="sc">&amp;</span> season <span class="sc">==</span> <span class="dv">2019</span>) <span class="sc">|&gt;</span></span>
+<span id="cb43-29"><a href="#cb43-29" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rename</span>(<span class="at">GF =</span> total_scored, <span class="at">GA =</span> total_conceded) <span class="sc">|&gt;</span> </span>
+<span id="cb43-30"><a href="#cb43-30" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">GD =</span> GF <span class="sc">-</span> GA) <span class="sc">|&gt;</span> </span>
+<span id="cb43-31"><a href="#cb43-31" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">played =</span> match_number) <span class="sc">|&gt;</span> </span>
+<span id="cb43-32"><a href="#cb43-32" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(teams, played, won, drawn, lost, GF, GA, GD, total_points) <span class="sc">|&gt;</span> </span>
+<span id="cb43-33"><a href="#cb43-33" aria-hidden="true" tabindex="-1"></a>   <span class="fu">arrange</span>(<span class="fu">desc</span>(total_points)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 20 × 9
+   teams          played   won drawn  lost    GF    GA    GD total_points
+   &lt;chr&gt;           &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;        &lt;dbl&gt;
+ 1 Man City           38    32     2     4    95    23    72           98
+ 2 Liverpool          38    30     7     1    89    22    67           97
+ 3 Chelsea            38    21     9     8    63    39    24           72
+ 4 Tottenham          38    23     2    13    67    39    28           71
+ 5 Arsenal            38    21     7    10    73    51    22           70
+ 6 Man United         38    19     9    10    65    54    11           66
+ 7 Wolves             38    16     9    13    47    46     1           57
+ 8 Everton            38    15     9    14    54    46     8           54
+ 9 Leicester          38    15     7    16    51    48     3           52
+10 West Ham           38    15     7    16    52    55    -3           52
+11 Watford            38    14     8    16    52    59    -7           50
+12 Crystal Palace     38    14     7    17    51    53    -2           49
+13 Bournemouth        38    13     6    19    56    70   -14           45
+14 Newcastle          38    12     9    17    42    48    -6           45
+15 Burnley            38    11     7    20    45    68   -23           40
+16 Southampton        38     9    12    17    45    65   -20           39
+17 Brighton           38     9     9    20    35    60   -25           36
+18 Cardiff            38    10     4    24    34    69   -35           34
+19 Fulham             38     7     5    26    34    81   -47           26
+20 Huddersfield       38     3     7    28    22    76   -54           16</code></pre>
+</div>
+</div>
+<p>The goal difference between the top and bottom sides is a remarkable 126 goals across just 38 games. This is a staggering difference and the features we build for our model must reflect this, a concept usually known as <em>goal supremacy</em>.</p>
+<p>We can view the scale of the difference in the following plot:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="sc">|&gt;</span> </span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">pivot_longer</span>(home_team<span class="sc">:</span>away_team, <span class="at">names_to =</span> <span class="st">"location"</span>, <span class="at">values_to =</span> <span class="st">"teams"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">goals_scored =</span> <span class="fu">case_when</span>(</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">~</span> home_goals,</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">~</span> away_goals</span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>   )) <span class="sc">|&gt;</span> </span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">goals_conceded =</span> <span class="fu">case_when</span>(</span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">~</span> away_goals,</span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">~</span> home_goals</span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>   )) <span class="sc">|&gt;</span> </span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(season, teams) <span class="sc">|&gt;</span> </span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">match_number =</span> <span class="fu">seq</span>(teams)) <span class="sc">|&gt;</span> </span>
+<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">total_scored =</span> <span class="fu">cumsum</span>(goals_scored),</span>
+<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>          <span class="at">total_conceded =</span> <span class="fu">cumsum</span>(goals_conceded),</span>
+<span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a>          <span class="at">goal_diff =</span> total_scored <span class="sc">-</span> total_conceded)<span class="sc">|&gt;</span> </span>
+<span id="cb45-16"><a href="#cb45-16" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb45-17"><a href="#cb45-17" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filter</span>(season <span class="sc">==</span> <span class="dv">2019</span> <span class="sc">&amp;</span> match_number <span class="sc">==</span> <span class="dv">38</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb45-18"><a href="#cb45-18" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(teams, goal_diff) <span class="sc">|&gt;</span> </span>
+<span id="cb45-19"><a href="#cb45-19" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">goal_supremacy =</span> goal_diff <span class="sc">-</span> <span class="fu">min</span>(goal_diff)) <span class="sc">|&gt;</span> </span>
+<span id="cb45-20"><a href="#cb45-20" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">teams =</span> <span class="fu">fct_reorder</span>(teams, goal_supremacy)) <span class="sc">|&gt;</span> </span>
+<span id="cb45-21"><a href="#cb45-21" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> teams, <span class="at">y =</span> goal_supremacy)) <span class="sc">+</span> </span>
+<span id="cb45-22"><a href="#cb45-22" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb45-23"><a href="#cb45-23" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_segment</span>(<span class="fu">aes</span>(<span class="at">x =</span> teams, <span class="at">xend =</span> teams, <span class="at">y =</span> <span class="dv">0</span>, <span class="at">yend =</span> goal_supremacy), <span class="at">size =</span> <span class="fl">1.25</span>) <span class="sc">+</span> </span>
+<span id="cb45-24"><a href="#cb45-24" aria-hidden="true" tabindex="-1"></a>   <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb45-25"><a href="#cb45-25" aria-hidden="true" tabindex="-1"></a>   <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">title =</span> <span class="st">"Goal Supremacy in the 2018-19 Season"</span>) <span class="sc">+</span></span>
+<span id="cb45-26"><a href="#cb45-26" aria-hidden="true" tabindex="-1"></a>   <span class="fu">theme_classic</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid figure-img" width="864"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Similarly we can show the difference in ability between teams by plotting the number of wins, draws and losses for each of the sides.</p>
+<p>This is a more complicated plot and will require us to first extract a vector of team-names, ordered by way of finishing position:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>team_order <span class="ot">&lt;-</span> football_data <span class="sc">|&gt;</span> </span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">pivot_longer</span>(home_team<span class="sc">:</span>away_team, <span class="at">names_to =</span> <span class="st">"location"</span>, <span class="at">values_to =</span> <span class="st">"teams"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">points =</span> <span class="fu">case_when</span>(</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"H"</span> <span class="sc">~</span> <span class="dv">3</span>,</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"D"</span> <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"A"</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"H"</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"D"</span> <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"A"</span> <span class="sc">~</span> <span class="dv">3</span></span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>   )) <span class="sc">|&gt;</span> </span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(season, teams) <span class="sc">|&gt;</span> </span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">match_number =</span> <span class="fu">seq</span>(teams)) <span class="sc">|&gt;</span> </span>
+<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">total_points =</span> <span class="fu">cumsum</span>(points)) <span class="sc">|&gt;</span> </span>
+<span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
+<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filter</span>(match_number <span class="sc">==</span> <span class="dv">38</span> <span class="sc">&amp;</span> season <span class="sc">==</span> <span class="dv">2019</span>) <span class="sc">|&gt;</span></span>
+<span id="cb46-16"><a href="#cb46-16" aria-hidden="true" tabindex="-1"></a>   <span class="fu">arrange</span>(<span class="fu">desc</span>(total_points)) <span class="sc">|&gt;</span> </span>
+<span id="cb46-17"><a href="#cb46-17" aria-hidden="true" tabindex="-1"></a>   <span class="fu">pull</span>(teams)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This plot shows the number of games each side won, drew or lost in in the 2018-19 season. The teams are arranged according to their finishing position in the league:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="sc">|&gt;</span> </span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">pivot_longer</span>(home_team<span class="sc">:</span>away_team, <span class="at">names_to =</span> <span class="st">"location"</span>, <span class="at">values_to =</span> <span class="st">"teams"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">match_outcome =</span> <span class="fu">case_when</span>(</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"H"</span> <span class="sc">~</span> <span class="st">"Won"</span>,</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"D"</span> <span class="sc">~</span> <span class="st">"Drawn"</span>,</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"home_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"A"</span> <span class="sc">~</span> <span class="st">"Lost"</span>,</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"H"</span> <span class="sc">~</span> <span class="st">"Lost"</span>,</span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"D"</span> <span class="sc">~</span> <span class="st">"Drawn"</span>,</span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>      location <span class="sc">==</span> <span class="st">"away_team"</span> <span class="sc">&amp;</span> outcome <span class="sc">==</span> <span class="st">"A"</span> <span class="sc">~</span> <span class="st">"Won"</span></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>   )) <span class="sc">|&gt;</span> </span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">match_outcome =</span> <span class="fu">factor</span>(</span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>      match_outcome, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Lost"</span>, <span class="st">"Drawn"</span>, <span class="st">"Won"</span>))</span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">|&gt;</span> </span>
+<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">teams =</span> <span class="fu">factor</span>(teams, <span class="at">levels =</span> team_order)) <span class="sc">|&gt;</span> </span>
+<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filter</span>(season <span class="sc">==</span> <span class="dv">2019</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> match_outcome)) <span class="sc">+</span></span>
+<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_bar</span>(<span class="fu">aes</span>(<span class="at">fill =</span> match_outcome), <span class="at">colour =</span> <span class="st">"black"</span>, <span class="at">alpha =</span> <span class="fl">0.8</span>) <span class="sc">+</span> </span>
+<span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a>   <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a>   <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="st">"teams"</span>) <span class="sc">+</span> </span>
+<span id="cb47-20"><a href="#cb47-20" aria-hidden="true" tabindex="-1"></a>   <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Totals"</span>, <span class="at">x =</span> <span class="cn">NULL</span>, </span>
+<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Breakdown of results by team for the 2018-19 season"</span>) <span class="sc">+</span> </span>
+<span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a>   <span class="fu">guides</span>(<span class="at">fill =</span> <span class="fu">guide_legend</span>(<span class="at">reverse =</span> <span class="cn">TRUE</span>, <span class="at">title =</span> <span class="cn">NULL</span>)) <span class="sc">+</span></span>
+<span id="cb47-23"><a href="#cb47-23" aria-hidden="true" tabindex="-1"></a>   <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"#009E73"</span>, <span class="st">"#E69F00"</span>, <span class="st">"#0072B2"</span>)) <span class="sc">+</span></span>
+<span id="cb47-24"><a href="#cb47-24" aria-hidden="true" tabindex="-1"></a>   <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
+<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a>   <span class="fu">theme</span>(</span>
+<span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a>      <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb47-28"><a href="#cb47-28" aria-hidden="true" tabindex="-1"></a>      <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb47-29"><a href="#cb47-29" aria-hidden="true" tabindex="-1"></a>      <span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb47-30"><a href="#cb47-30" aria-hidden="true" tabindex="-1"></a>      <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">16</span>)</span>
+<span id="cb47-31"><a href="#cb47-31" aria-hidden="true" tabindex="-1"></a>   )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/unnamed-chunk-38-1.png" class="img-fluid figure-img" width="864"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>One thing to note is how similar the order of the teams is between these plots. It seems that goal-supremacy and the total number of points is highly correlated, so we shall focus on engineering features based on goals. The home-advantage is also significant and needs to be taken into account.</p>
+</section>
+</section>
+<section id="feature-engineering" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Feature Engineering</h1>
+<p>The obvious model to use here is <code>poisson regression</code>; but should we run our regression on the goals or the expected goals? This isn’t an easy decision: using goals-scored as our explanatory variable is problematic because the scoreline of a game is often highly misleading. Goals are fairly rare events and it’s commonplace for teams to get lucky with respect to the scoreline.</p>
+<p>In this respect, expected-goals is a better option. The problem with expected-goals is that the best teams will often score more goals than expected, just as the worst teams often score fewer. This is what we should expect, as the best teams will convert a greater percentage of chances owing to the quality of their players. Similarly, the lesser teams will often fail to take thier chances as their quality of player isn’t quite so high. Therefore if we run our regression on expected goals we run the risk of underplaying the superiority of the best sides. An obvious compromise is to take the mean of actual and expected-goals.</p>
+<p>But first we must address some missing values that crept in when we <code>left_joined()</code> our data; the <code>NA</code> values are down to the two datasets containing different numbers of seasons.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="ot">&lt;-</span> <span class="fu">drop_na</span>(football_data) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Next we introduce a <code>match_number</code> variable. To do this we will have to pivot our data into long format using <code>pivot_longer()</code>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>football_data_long <span class="ot">&lt;-</span> football_data <span class="sc">|&gt;</span> </span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">pivot_longer</span>(home_team<span class="sc">:</span>away_team, <span class="at">names_to =</span> <span class="st">"location"</span>, <span class="at">values_to =</span> <span class="st">"teams"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(season, teams) <span class="sc">|&gt;</span> </span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">match_number =</span> <span class="fu">seq</span>(teams)) <span class="sc">|&gt;</span> </span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(date, teams, match_number)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We now need our data back in the wide format. Using <code>pivot_wider()</code> doesn’t work in this context so we have to use <code>left_join()</code> instead:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="ot">&lt;-</span> football_data <span class="sc">|&gt;</span> </span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">left_join</span>(</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>      football_data_long,</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"date"</span> <span class="ot">=</span> <span class="st">"date"</span>, <span class="st">"home_team"</span> <span class="ot">=</span> <span class="st">"teams"</span>)</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span> </span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">left_join</span>(</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>      football_data_long,</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"date"</span> <span class="ot">=</span> <span class="st">"date"</span>, <span class="st">"away_team"</span> <span class="ot">=</span> <span class="st">"teams"</span>),</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">suffix =</span> <span class="fu">c</span>(<span class="st">"_home"</span>, <span class="st">"_away"</span>)</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>   )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let’s now take the mean of actual and expected goals:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="ot">&lt;-</span> football_data <span class="sc">|&gt;</span> </span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">home_goals_combined =</span> (home_goals <span class="sc">+</span> home_xg) <span class="sc">/</span> <span class="dv">2</span>,</span>
+<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">away_goals_combined =</span> (away_goals <span class="sc">+</span> away_xg) <span class="sc">/</span> <span class="dv">2</span></span>
+<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span> </span>
+<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Next we use <code>slide_mean()</code> from the <code>slider</code> package to calculate the rolling mean of goals scored and conceded at home by each side in their last six home games. It is important we <code>lag()</code> this feature to avoid data leakage.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="ot">&lt;-</span> football_data <span class="sc">|&gt;</span> </span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(home_team, season) <span class="sc">|&gt;</span> </span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">avg_goals_home =</span> <span class="fu">slide_mean</span>(home_goals_combined, <span class="at">before =</span> <span class="dv">6</span>),</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">avg_conceded_home =</span> <span class="fu">slide_mean</span>(away_goals_combined, <span class="at">before =</span> <span class="dv">6</span>)</span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span> </span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">avg_goals_home =</span> <span class="fu">lag</span>(avg_goals_home),</span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">avg_conceded_home =</span> <span class="fu">lag</span>(avg_conceded_home)</span>
+<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span> </span>
+<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> <span class="fu">drop_na</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We now do the same for the away sides:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="ot">&lt;-</span> football_data <span class="sc">|&gt;</span> </span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(away_team, season) <span class="sc">|&gt;</span> </span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">avg_goals_away =</span> <span class="fu">slide_mean</span>(away_goals_combined, <span class="at">before =</span> <span class="dv">6</span>),</span>
+<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">avg_conceded_away =</span> <span class="fu">slide_mean</span>(home_goals_combined, <span class="at">before =</span> <span class="dv">6</span>)</span>
+<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span> </span>
+<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">avg_goals_away =</span> <span class="fu">lag</span>(avg_goals_away),</span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">avg_conceded_away =</span> <span class="fu">lag</span>(avg_conceded_away)</span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span>    </span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> <span class="fu">drop_na</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now each side has a separate figure for their home-games and for their away games. This should enable us to capture the extent of home-advantage. Finally we remove the first six games of the season, home and away. They are removed because we use the first six games to calculate the rolling means we are using as explanatory variables.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>football_data <span class="ot">&lt;-</span> football_data <span class="sc">|&gt;</span> </span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filter</span>(match_number_home <span class="sc">&gt;=</span> <span class="dv">6</span>, match_number_away <span class="sc">&gt;=</span> <span class="dv">6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Our next job is to build the model. The choice of <code>poisson regression</code> makes this is a fairly simple process, as there are no parameters to tune.</p>
+</section>
+<section id="building-a-model" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Building a Model</h1>
+<p>As always, we begin by splitting our data into training and test sets:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>football_train <span class="ot">&lt;-</span> football_data <span class="sc">|&gt;</span> </span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filter</span>(season <span class="sc">&lt;</span> <span class="dv">2017</span>)</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>football_test <span class="ot">&lt;-</span> football_data <span class="sc">|&gt;</span> </span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filter</span>(season <span class="sc">&gt;</span> <span class="dv">2016</span> <span class="sc">&amp;</span> season <span class="sc">&lt;</span> <span class="dv">2022</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We need two models. The first model predicts the number of goals scored by the home-team:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>model_home <span class="ot">&lt;-</span> <span class="fu">poisson_reg</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">set_engine</span>(<span class="st">"glm"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">fit</span>(home_goals <span class="sc">~</span> avg_goals_home <span class="sc">+</span> avg_conceded_away, <span class="at">data =</span> football_train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The second model predicts the number of goals scored by the away-team:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>model_away <span class="ot">&lt;-</span> <span class="fu">poisson_reg</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">set_engine</span>(<span class="st">"glm"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">fit</span>(away_goals <span class="sc">~</span> avg_goals_away <span class="sc">+</span> avg_conceded_away, <span class="at">data =</span> football_train)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In turn we have two sets of predictions, home and away:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>home_preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(model_home, <span class="at">new_data =</span> football_test)</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>away_preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(model_away, <span class="at">new_data =</span> football_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can now combine these predictions into a single dataset:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>match_preds <span class="ot">&lt;-</span> football_test <span class="sc">|&gt;</span> </span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(date<span class="sc">:</span>away_goals, <span class="fu">starts_with</span>(<span class="st">"max_"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">bind_cols</span>(home_preds) <span class="sc">|&gt;</span> </span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rename</span>(<span class="at">home_pred =</span> .pred) <span class="sc">|&gt;</span> </span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">bind_cols</span>(away_preds) <span class="sc">|&gt;</span> </span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rename</span>(<span class="at">away_pred =</span> .pred)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>How accurate is our model?</p>
+</section>
+<section id="evaluation" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Evaluation</h1>
+<p>Before attempting to measure the accuracy of our model we should first remind ourselves what we have predicted. For each match in <code>football_test</code> we have predicted the goals scored by both the home and away sides. This is not, however, what we are really interested in. What we really want to know is what team is the more likely winner.</p>
+<p>To answer this question we must first write a function for converting the outputs of the model into probabilities:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>calculate_odds <span class="ot">&lt;-</span> </span>
+<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>   <span class="cf">function</span>(outcome, pred_home_goals, pred_away_goals, <span class="at">max_goals =</span> <span class="dv">9</span>) {</span>
+<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a>      home_goals <span class="ot">&lt;-</span> <span class="fu">dpois</span>(<span class="dv">0</span><span class="sc">:</span>max_goals, pred_home_goals)</span>
+<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>      away_goals <span class="ot">&lt;-</span> <span class="fu">dpois</span>(<span class="dv">0</span><span class="sc">:</span>max_goals, pred_away_goals)</span>
+<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>      goal_matrix <span class="ot">&lt;-</span> home_goals <span class="sc">%o%</span> away_goals</span>
+<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (outcome <span class="sc">==</span> <span class="st">"H"</span>) {</span>
+<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a>         home_prob <span class="ot">&lt;-</span> <span class="fu">sum</span>(goal_matrix[<span class="fu">lower.tri</span>(goal_matrix)])</span>
+<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>         <span class="fu">return</span>(home_prob)</span>
+<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a>      } <span class="cf">else</span> <span class="cf">if</span> (outcome <span class="sc">==</span> <span class="st">"A"</span>) {</span>
+<span id="cb60-10"><a href="#cb60-10" aria-hidden="true" tabindex="-1"></a>         away_prob <span class="ot">&lt;-</span> <span class="fu">sum</span>(goal_matrix[<span class="fu">upper.tri</span>(goal_matrix)])</span>
+<span id="cb60-11"><a href="#cb60-11" aria-hidden="true" tabindex="-1"></a>         <span class="fu">return</span>(away_prob)</span>
+<span id="cb60-12"><a href="#cb60-12" aria-hidden="true" tabindex="-1"></a>      } <span class="cf">else</span> <span class="cf">if</span> (outcome <span class="sc">==</span> <span class="st">"D"</span>) {</span>
+<span id="cb60-13"><a href="#cb60-13" aria-hidden="true" tabindex="-1"></a>         draw_prob <span class="ot">&lt;-</span> <span class="fu">sum</span>(<span class="fu">diag</span>(goal_matrix))</span>
+<span id="cb60-14"><a href="#cb60-14" aria-hidden="true" tabindex="-1"></a>         <span class="fu">return</span>(draw_prob)</span>
+<span id="cb60-15"><a href="#cb60-15" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb60-16"><a href="#cb60-16" aria-hidden="true" tabindex="-1"></a>   }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We can use our <code>calculate_odds()</code> function to derive the relevant probabilities from the <code>match_preds</code> dataframe:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>match_preds <span class="ot">&lt;-</span> match_preds <span class="sc">|&gt;</span> </span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">rowwise</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">home_prob =</span> <span class="fu">calculate_odds</span>(<span class="st">"H"</span>, home_pred, away_pred),</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">draw_prob =</span> <span class="fu">calculate_odds</span>(<span class="st">"D"</span>, home_pred, away_pred),</span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">away_prob =</span> <span class="fu">calculate_odds</span>(<span class="st">"A"</span>, home_pred, away_pred)</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span> </span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We now have the probability of each possible outcome for every match in <code>match_preds</code>. So how shall we evaluate our model? One way is to compare our probabilities to those of the bookmakers. If our model is competitive with the bookmakers’ odds, then we’ve done a pretty good job.</p>
+<p>To do this let’s convert our probabilities into betting odds:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>match_preds <span class="ot">&lt;-</span> match_preds <span class="sc">|&gt;</span> </span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(date<span class="sc">:</span>outcome, <span class="fu">starts_with</span>(<span class="st">"max_"</span>), <span class="fu">ends_with</span>(<span class="st">"_prob"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">home_price =</span> <span class="dv">1</span> <span class="sc">/</span> home_prob,</span>
+<span id="cb62-5"><a href="#cb62-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">draw_price =</span> <span class="dv">1</span> <span class="sc">/</span> draw_prob,</span>
+<span id="cb62-6"><a href="#cb62-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">away_price =</span> <span class="dv">1</span> <span class="sc">/</span> away_prob</span>
+<span id="cb62-7"><a href="#cb62-7" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span> </span>
+<span id="cb62-8"><a href="#cb62-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(date<span class="sc">:</span>outcome, <span class="fu">ends_with</span>(<span class="st">"_price"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>A simple way to make the comparison between ourselves and the bookmakers is to place a virtual bet every time the bookmaker’s odds exceed our own. The following dataframe is a record of every bet we would make following this methodology:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> match_preds <span class="sc">|&gt;</span> </span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">home_bets =</span> <span class="fu">if_else</span>(</span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">condition =</span> home_price <span class="sc">&lt;</span> max_home_price,</span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">true =</span> (max_home_price <span class="sc">*</span> (outcome <span class="sc">==</span> <span class="st">"H"</span>)) <span class="sc">-</span> <span class="dv">1</span>,</span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">false =</span> <span class="dv">0</span></span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>   )) <span class="sc">|&gt;</span> </span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">draw_bets =</span> <span class="fu">if_else</span>(</span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">condition =</span> draw_price <span class="sc">&lt;</span> max_draw_price,</span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">true =</span> (max_draw_price <span class="sc">*</span> (outcome <span class="sc">==</span> <span class="st">"D"</span>)) <span class="sc">-</span> <span class="dv">1</span>,</span>
+<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">false =</span> <span class="dv">0</span></span>
+<span id="cb63-11"><a href="#cb63-11" aria-hidden="true" tabindex="-1"></a>   )) <span class="sc">|&gt;</span> </span>
+<span id="cb63-12"><a href="#cb63-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">away_bets =</span> <span class="fu">if_else</span>(</span>
+<span id="cb63-13"><a href="#cb63-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">condition =</span> away_price <span class="sc">&lt;</span> max_away_price,</span>
+<span id="cb63-14"><a href="#cb63-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">true =</span> (max_away_price <span class="sc">*</span> (outcome <span class="sc">==</span> <span class="st">"A"</span>)) <span class="sc">-</span> <span class="dv">1</span>,</span>
+<span id="cb63-15"><a href="#cb63-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">false =</span> <span class="dv">0</span></span>
+<span id="cb63-16"><a href="#cb63-16" aria-hidden="true" tabindex="-1"></a>   )) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Is the model profitable?</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span> </span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(season) <span class="sc">|&gt;</span> </span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">all_bets =</span> home_bets <span class="sc">+</span> draw_bets <span class="sc">+</span> away_bets) <span class="sc">|&gt;</span> </span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">summarise</span>(</span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">total_bets =</span> <span class="fu">sum</span>(home_bets <span class="sc">!=</span> <span class="dv">0</span>),</span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>      <span class="at">total_wins =</span> <span class="fu">sum</span>(home_bets <span class="sc">&gt;</span> <span class="dv">0</span>),</span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">profit =</span> <span class="fu">sum</span>(home_bets)</span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a>   ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 4
+  season total_bets total_wins profit
+   &lt;int&gt;      &lt;int&gt;      &lt;int&gt;  &lt;dbl&gt;
+1   2017        185         73   27.4
+2   2018        200         67   26.7
+3   2019        176         62   34.2
+4   2020        188         64   27.2
+5   2021        182         46  -31.4</code></pre>
+</div>
+</div>
+<p>Perhaps surprisingly the answer is yes: we make a profit in four out of five seasons. It is probably significant that the one losing season was when the matches were played behind closed doors, which may well have thrown off the implicit home-advantage feature.</p>
+<p>The following plot shows match days (i.e.&nbsp;the days on which we are able to bet) against profit. For such a simple model the results are surprisingly consistent, at least up until covid forced the spectators to stay at home.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span> </span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filter</span>(home_bets <span class="sc">!=</span> <span class="dv">0</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb66-4"><a href="#cb66-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">year =</span> <span class="fu">get_year</span>(date),</span>
+<span id="cb66-5"><a href="#cb66-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">month =</span> <span class="fu">get_month</span>(date)</span>
+<span id="cb66-6"><a href="#cb66-6" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span> </span>
+<span id="cb66-7"><a href="#cb66-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(year, month) <span class="sc">|&gt;</span> </span>
+<span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">profit =</span> <span class="fu">sum</span>(home_bets)) <span class="sc">|&gt;</span> </span>
+<span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb66-10"><a href="#cb66-10" aria-hidden="true" tabindex="-1"></a>   <span class="fu">select</span>(year, month, profit) <span class="sc">|&gt;</span> </span>
+<span id="cb66-11"><a href="#cb66-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">distinct</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb66-12"><a href="#cb66-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(</span>
+<span id="cb66-13"><a href="#cb66-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">profit =</span> <span class="fu">cumsum</span>(profit),</span>
+<span id="cb66-14"><a href="#cb66-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">index =</span> <span class="fu">row_number</span>()</span>
+<span id="cb66-15"><a href="#cb66-15" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">|&gt;</span> </span>
+<span id="cb66-16"><a href="#cb66-16" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> index, <span class="at">y =</span> profit)) <span class="sc">+</span></span>
+<span id="cb66-17"><a href="#cb66-17" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_line</span>(<span class="at">size =</span> <span class="fl">1.5</span>) <span class="sc">+</span></span>
+<span id="cb66-18"><a href="#cb66-18" aria-hidden="true" tabindex="-1"></a>   <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Total Betting Days"</span>, <span class="at">y =</span> <span class="st">"Total Profit"</span>, </span>
+<span id="cb66-19"><a href="#cb66-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">title =</span> <span class="st">"Profits for English Premier League"</span>) <span class="sc">+</span></span>
+<span id="cb66-20"><a href="#cb66-20" aria-hidden="true" tabindex="-1"></a>   <span class="fu">theme_classic</span>() <span class="sc">+</span> </span>
+<span id="cb66-21"><a href="#cb66-21" aria-hidden="true" tabindex="-1"></a>   <span class="fu">theme</span>(</span>
+<span id="cb66-22"><a href="#cb66-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb66-23"><a href="#cb66-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb66-24"><a href="#cb66-24" aria-hidden="true" tabindex="-1"></a>      <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">16</span>)</span>
+<span id="cb66-25"><a href="#cb66-25" aria-hidden="true" tabindex="-1"></a>   )   </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/unnamed-chunk-56-1.png" class="img-fluid figure-img" width="864"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Overall we can be quite pleased with our efforts. Certainly decent results can be obtained when it comes to predicting football games using publicly available data.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
