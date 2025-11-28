@@ -176,18 +176,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="auto-download-process" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="auto-download-process"><span class="header-section-number">2.1</span> Auto Download Process</h2>
 <p>Thankfully the links to the csv files have a common format, with the only difference being a reference to the season in question. This reference to the season takes the form of four digits, such that 1920 refers to the 2019-2020 season.</p>
-<p>Therefore our first job is to construct a vector of the digits we need:</p>
+<p>Therefore our first job is to construct a vector of the digits we need. Thankfully, this is very easily done:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>numerals <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">10</span><span class="sc">:</span><span class="dv">20</span>, <span class="dv">11</span><span class="sc">:</span><span class="dv">21</span>)</span>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>numerals <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="dv">10</span><span class="sc">:</span><span class="dv">20</span>, <span class="dv">11</span><span class="sc">:</span><span class="dv">21</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>numerals <span class="ot">&lt;-</span> <span class="fu">sort</span>(numerals) <span class="sc">|&gt;</span>  </span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">as.character</span>() <span class="sc">|&gt;</span> </span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">str_flatten</span>()</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>numerals <span class="ot">&lt;-</span> <span class="fu">str_match_all</span>(numerals, <span class="st">"</span><span class="sc">\\</span><span class="st">d{4}"</span>) <span class="sc">|&gt;</span>  </span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">unlist</span>()</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>numerals</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>numerals</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> [1] "1011" "1112" "1213" "1314" "1415" "1516" "1617" "1718" "1819" "1920"
 [11] "2021"</code></pre>

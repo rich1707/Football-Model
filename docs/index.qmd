@@ -61,17 +61,10 @@ As we are dealing with just seven seasons worth of data, it would be easy enough
 
 Thankfully the links to the csv files have a common format, with the only difference being a reference to the season in question. This reference to the season takes the form of four digits, such that 1920 refers to the 2019-2020 season.
 
-Therefore our first job is to construct a vector of the digits we need:
+Therefore our first job is to construct a vector of the digits we need. Thankfully, this is very easily done:
 
 ```{r}
-numerals <- c(10:20, 11:21)
-
-numerals <- sort(numerals) |>  
-   as.character() |> 
-   str_flatten()
-
-numerals <- str_match_all(numerals, "\\d{4}") |>  
-   unlist()
+numerals <- paste0(10:20, 11:21)
 
 numerals
 ```

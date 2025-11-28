@@ -15,14 +15,7 @@ library(fs)
 
 # collecting data 1 ----
 
-numerals <- c(10:20, 11:21)
-
-numerals <- sort(numerals) |>  
-   as.character() |> 
-   str_flatten()
-
-numerals <- str_match_all(numerals, "\\d{4}") |>  
-   unlist()
+numerals <- paste0(10:20, 11:21)
 
 data_urls <- paste0("https://www.football-data.co.uk/mmz4281/", numerals, "/E0.csv")
 
